@@ -47,15 +47,10 @@ namespace UserService.Api.Controllers
         // GET api/<UsersController>/5
         [HttpPost]
         [AllowAnonymous]
-        public IActionResult ValidateUser(string emailid,string pwd)
+        public IActionResult UserLogin(string emailid,string pwd)
         {
-            //DtoJwtToken accessToken = userAccountService.AuthenticateUser(userLogIn);
             DtoJwtToken accessToken = _userService.GetAllUser(emailid, pwd);
-           return StatusCode(StatusCodes.Status200OK, accessToken);
-         //   return StatusCode(StatusCodes.Status201Created, createdAccount);
-            // Return JWT token if the user given email/password matches with the DB
-
-
+            return StatusCode(StatusCodes.Status200OK, accessToken);
             //return _userService.GetAllUser(emailid, pwd);
         }
 
