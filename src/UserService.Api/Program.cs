@@ -6,6 +6,9 @@ using System;
 using AutoMapper;
 using Service.Mapper;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +40,29 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader(); // Allow any HTTP headers
     });
 });
+// Configure JWT authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false; // Set to true in production for HTTPS
+        options.SaveToken = true;
+
+        // Configure TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
+        };
+    });
+
+
+
+
+
 var app = builder.Build();
 app.UseCors(); ;
 if(app.Environment.IsDevelopment())
@@ -48,8 +74,10 @@ if(app.Environment.IsDevelopment())
         });
  }
 
+// Configure the HTTP request pipeline.
+app.UseAuthentication(); // Ensure authentication middleware is added
+app.UseAuthorization(); // Ensure authorization middleware is added
 
-app.UseAuthorization();
 
 //app.MapControllers();
 app.MapControllerRoute(

@@ -1,6 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Service.DtoModels;
 using Service.Interface;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using UserService.Model;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,9 +18,17 @@ namespace UserService.Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserProfileService _userService;
+
+        private readonly string _secretKey;
+        private readonly string _issuer;
+        private readonly string _audience;
+
         public UsersController(IUserProfileService userService)
         {
             _userService = userService;
+            //_secretKey = configuration["JwtSettings:SecretKey"];
+            //_issuer = configuration["JwtSettings:Issuer"];
+            //_audience = configuration["JwtSettings:Audience"];
         }
         // GET: api/<UsersController>
         [HttpGet]
@@ -31,9 +46,17 @@ namespace UserService.Api.Controllers
 
         // GET api/<UsersController>/5
         [HttpPost]
-        public DtoUserprofile ValidateUser(string emailid,string pwd)
+        [AllowAnonymous]
+        public IActionResult ValidateUser(string emailid,string pwd)
         {
-            return _userService.GetAllUser(emailid, pwd);
+            //DtoJwtToken accessToken = userAccountService.AuthenticateUser(userLogIn);
+            DtoJwtToken accessToken = _userService.GetAllUser(emailid, pwd);
+           return StatusCode(StatusCodes.Status200OK, accessToken);
+         //   return StatusCode(StatusCodes.Status201Created, createdAccount);
+            // Return JWT token if the user given email/password matches with the DB
+
+
+            //return _userService.GetAllUser(emailid, pwd);
         }
 
         // POST api/<UsersController>

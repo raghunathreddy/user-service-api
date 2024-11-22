@@ -4,11 +4,19 @@ using Service.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using UserService.Model;
 using UserService.Repository.Implementation;
 using UserService.Repository.Interface;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Service.Implementation
 {
@@ -39,10 +47,30 @@ namespace Service.Implementation
             _userReposiroty.AddUserdetails(userdata);
         }
 
-        public DtoUserprofile GetAllUser(string emailid, string pwd)
+        public DtoJwtToken GetAllUser(string emailid, string pwd)
         {
             var result = _userReposiroty.GetAllUser(emailid, Encodepwd(pwd));
-            return _mapper.Map<DtoUserprofile>(result);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenKey = Encoding.UTF8.GetBytes("4F79A9D8B8A7AABDECBF4D0EFAFD6D3F2C1A0A9C8987859499BAC7B6F2D9E8F7");
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim("user_id", result.user_id.ToString()),
+                    new Claim("username", result.username),
+                    new Claim("email", result.email)
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return new DtoJwtToken { AccessToken = tokenHandler.WriteToken(token) };
+
+           // return StatusCode(StatusCodes.Status200OK, accessToken);
+
+         
         }
 
         public List<DtoUserprofile> GetAllUsers()
